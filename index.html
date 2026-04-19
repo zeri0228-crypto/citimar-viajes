@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#027fb9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Citimar Travel Agency</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#027fb9;--blue-dark:#015a85;--blue-light:#e6f4fb;
+  --orange:#d86919;--orange-light:#fff4ec;
+  --red:#d11223;--red-light:#fdecea;
+  --green:#2e7d32;--green-light:#e8f5e9;
+  --gray-bg:#f4f5f7;--gray-border:#e5e7eb;
+  --gray-text:#1a1a2e;--gray-muted:#999;--wa:#25D366;
+  --font:"Nunito",sans-serif;--r:14px;--rb:24px;
+  --sc:0 2px 12px rgba(0,0,0,.07);--tr:all .2s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:#1a1a2e;display:flex;align-items:center;justify-content:center}
+.app{width:100%;max-width:430px;height:100dvh;background:var(--gray-bg);overflow:hidden;display:flex;flex-direction:column}
+@media(min-width:768px){
+  body{background:#0d1117}
+  .app{max-width:100%;flex-direction:row}
+  .sidebar{display:flex!important}
+  .bnav{display:none!important}
+  .main{flex:1}
+}
+/* SIDEBAR */
+.sidebar{width:200px;background:#1a1a2e;display:none;flex-direction:column;flex-shrink:0;height:100dvh}
+.sb-head{padding:16px 14px 12px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
+.sb-logo{width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid var(--orange);flex-shrink:0}
+.sb-logo img{width:100%;height:100%;object-fit:cover;display:block}
+.sb-name{font-size:13px;font-weight:700;color:#fff}
+.sb-url{font-size:9px;color:rgba(255,255,255,.4);margin-top:1px}
+.sb-nav{flex:1;padding:8px 0;overflow-y:auto}
+.sb-i{display:flex;align-items:center;gap:9px;padding:9px 14px;cursor:pointer;font-size:12px;color:rgba(255,255,255,.6);border-left:3px solid transparent;transition:var(--tr)}
+.sb-i:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.9)}
+.sb-i.on{background:rgba(2,127,185,.25);color:#fff;border-left-color:var(--orange)}
+.sb-i.off{opacity:.3;pointer-events:none}
+.sb-ico{font-size:14px;width:17px;text-align:center;flex-shrink:0}
+.sb-tag{margin-left:auto;font-size:8px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.35);padding:1px 5px;border-radius:4px}
+.sb-foot{padding:12px 14px;border-top:1px solid rgba(255,255,255,.08)}
+.sb-wa{background:var(--wa);border-radius:10px;padding:8px;font-size:10px;color:#fff;font-weight:700;text-align:center;display:flex;align-items:center;justify-content:center;gap:5px;text-decoration:none}
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;height:100dvh}
+.screen{display:none;flex-direction:column;flex:1;overflow:hidden}
+.screen.on{display:flex}
+/* HERO */
+.hero{background:var(--blue);flex-shrink:0;position:relative;overflow:hidden}
+.hero-photo{width:100%;height:100%;position:absolute;inset:0;z-index:0}
+.hero-ph-img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:.55}
+.hero-icon{font-size:44px;opacity:.18;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1}
+.hero-grad{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(2,127,185,.15) 0%,rgba(1,90,133,.55) 50%,rgba(1,74,110,.92) 100%);z-index:2}
+.hero-content{position:relative;z-index:5;padding-bottom:2px}
+.hero-logo{position:relative;margin:0 auto;margin-top:14px;width:74px;height:74px;border-radius:50%;overflow:hidden;border:3.5px solid #fff;box-shadow:0 4px 20px rgba(0,0,0,.35);background:#fff;display:block}
+.hero-logo img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-body{padding:10px 16px 10px;text-align:center;position:relative;z-index:5}
+.h-name{font-size:15px;font-weight:800;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.4)}
+.h-hotel{font-size:11px;color:rgba(255,255,255,.9);margin-top:4px;text-shadow:0 1px 4px rgba(0,0,0,.35)}
+.h-dates{font-size:10px;color:rgba(255,255,255,.75);margin-top:2px;text-shadow:0 1px 4px rgba(0,0,0,.3)}
+.hero-cd{margin:8px 14px 0;background:rgba(0,0,0,.18);border-radius:10px;padding:7px 12px;display:flex;align-items:center;gap:10px}
+.cd-n{font-size:26px;font-weight:800;color:#fff;line-height:1;font-family:"Playfair Display",serif}
+.cd-t{font-size:10px;color:rgba(255,255,255,.88);line-height:1.4}
+.hero-wa{margin:6px 14px 11px;background:var(--wa);border-radius:10px;padding:9px;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.hero-wa span{font-size:10px;color:#fff;font-weight:700}
+/* SECTION LIST */
+.slist{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px;background:var(--gray-bg)}
+@media(min-width:768px){.slist{display:grid;grid-template-columns:1fr 1fr;align-content:start}}
+.sc{background:#fff;border-radius:var(--r);border:.5px solid var(--gray-border);padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:var(--tr);box-shadow:var(--sc);text-decoration:none}
+.sc:hover{background:#f0f8ff;transform:translateY(-1px)}
+.sc.off{opacity:.35;pointer-events:none}
+.sc-ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sc-t{font-size:12px;font-weight:700;color:var(--gray-text)}
+.sc-s{font-size:9px;color:var(--gray-muted);margin-top:1px}
+.sc-arr{color:var(--orange);font-size:17px;font-weight:700;margin-left:auto;flex-shrink:0}
+.sc-off-tag{background:#f0f0f0;color:#bbb;font-size:8px;padding:2px 6px;border-radius:4px;margin-left:auto;white-space:nowrap}
+/* BOTTOM NAV */
+.bnav{background:#fff;border-top:.5px solid #e8e8e8;display:flex;padding:5px 0 max(7px,env(safe-area-inset-bottom));flex-shrink:0}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:2px 0}
+.bn:hover{opacity:.75}
+.bn-i{font-size:17px;line-height:1}
+.bn-l{font-size:8px;color:#bbb;font-weight:600}
+.bn-l.on{color:var(--blue)}
+/* INNER HEADER */
+.ih{background:var(--blue);padding:12px 14px 10px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.bk{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:7px;width:26px;height:26px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font);transition:var(--tr)}
+.bk:hover{background:rgba(255,255,255,.3)}
+.ih-acc{width:4px;height:17px;background:var(--orange);border-radius:3px}
+.ih-t{font-size:14px;font-weight:700;color:#fff}
+/* INNER BODY */
+.ib{flex:1;overflow-y:auto;padding:10px;background:var(--gray-bg)}
+.slbl{font-size:9px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.7px;margin:10px 0 5px}
+.slbl:first-child{margin-top:0}
+/* DOC CARD */
+.dc{background:#fff;border-radius:var(--r);border:.5px solid var(--gray-border);padding:9px 11px;display:flex;align-items:center;gap:9px;margin-bottom:6px;box-shadow:var(--sc)}
+.di{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.dif{flex:1;min-width:0}
+.dt{font-size:11px;font-weight:700;color:var(--gray-text)}
+.ds{font-size:9px;color:var(--gray-muted);margin-top:1px}
+/* PILL BUTTONS */
+.pb{border:none;border-radius:var(--rb);padding:6px 12px;font-size:9px;font-weight:700;cursor:pointer;color:#fff;white-space:nowrap;flex-shrink:0;font-family:var(--font);transition:var(--tr);text-decoration:none;display:inline-flex;align-items:center;gap:3px}
+.pb:hover{opacity:.85;transform:scale(.97)}
+.pb-bl{background:var(--blue)}.pb-or{background:var(--orange)}.pb-rd{background:var(--red)}
+/* MAPA */
+.map-wrapper{border-radius:var(--r);overflow:hidden;border:.5px solid var(--gray-border);margin-bottom:6px;box-shadow:var(--sc)}
+#leaflet-map{height:200px;width:100%}
+.map-foot{background:#fff;padding:8px 11px;display:flex;align-items:center;justify-content:space-between}
+.map-ruta{font-size:11px;font-weight:700;color:var(--gray-text);display:flex;align-items:center;gap:6px}
+.map-link{font-size:10px;color:var(--blue);font-weight:700;text-decoration:none}
+/* VUELO SELECTOR */
+.vc{background:#fff;border-radius:var(--r);border:.5px solid var(--gray-border);padding:11px 12px;margin-bottom:6px;box-shadow:var(--sc)}
+.vc-t{font-size:11px;font-weight:700;color:var(--gray-text);margin-bottom:8px}
+.vc-sel{width:100%;border:1.5px solid var(--gray-border);border-radius:10px;padding:8px 11px;font-size:11px;font-family:var(--font);color:var(--gray-text);background:#fff;outline:none;margin-bottom:8px;cursor:pointer}
+.vc-sel:focus{border-color:var(--blue)}
+.vc-btns{display:flex;gap:6px}
+.vb{flex:1;border:none;border-radius:var(--rb);padding:8px 6px;font-size:9px;font-weight:700;cursor:pointer;color:#fff;font-family:var(--font);transition:var(--tr);text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px}
+.vb:hover{opacity:.85}
+.vb-bl{background:var(--blue)}.vb-or{background:#e05c00}
+/* CHECKLIST */
+.cl-header{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-dark) 100%);border-radius:var(--r);padding:13px;margin-bottom:7px;color:#fff}
+.cl-badge{font-size:8px;font-weight:700;background:rgba(255,255,255,.2);border-radius:20px;padding:2px 8px;display:inline-block;margin-bottom:5px;letter-spacing:.5px;text-transform:uppercase}
+.cl-title{font-size:14px;font-weight:800;margin-bottom:2px}
+.cl-sub{font-size:10px;opacity:.8;margin-bottom:10px}
+.cl-stats{display:flex;gap:8px;margin-bottom:10px}
+.cl-stat{background:rgba(255,255,255,.18);border-radius:8px;padding:5px 10px;text-align:center;flex:1}
+.cl-stat-n{font-size:18px;font-weight:800}
+.cl-stat-l{font-size:8px;opacity:.8}
+.cl-actions{display:flex;gap:5px}
+.cla{flex:1;border:none;border-radius:10px;padding:7px 4px;font-size:9px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:2px}
+.cla-w{background:#fff;color:var(--blue)}
+.cla-g{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3)}
+.cla-o{background:var(--orange);color:#fff}
+/* CHECKLIST SECCIONES */
+.cl-sec{background:#fff;border-radius:var(--r);border:.5px solid var(--gray-border);overflow:hidden;margin-bottom:6px;box-shadow:var(--sc)}
+.cl-sec-h{padding:9px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;border-bottom:.5px solid #f0f0f0}
+.cl-sec-l{display:flex;align-items:center;gap:7px}
+.cl-sec-ico{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.cl-sec-name{font-size:11px;font-weight:700;color:var(--gray-text)}
+.cl-sec-cnt{font-size:9px;color:var(--gray-muted);margin-top:1px}
+.cl-sec-pct{font-size:10px;font-weight:700;color:var(--blue)}
+.cl-prog{height:3px;background:#f0f0f0;margin:0 12px 8px}
+.cl-prog-b{height:100%;background:var(--blue);transition:width .3s}
+.cl-items{padding:6px 12px 8px;display:flex;flex-direction:column;gap:4px}
+.cl-item{display:flex;align-items:flex-start;gap:8px;padding:3px 0;border-bottom:.5px solid #f8f8f8}
+.cl-item:last-child{border:none}
+.cl-cb{width:17px;height:17px;border-radius:5px;border:1.5px solid #d0d0d0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;margin-top:1px}
+.cl-cb.done{background:var(--blue);border-color:var(--blue)}
+.cl-cb.done::after{content:"✓";color:#fff;font-size:10px;font-weight:700}
+.cl-txt{font-size:10.5px;color:var(--gray-text);line-height:1.4}
+.cl-txt.done{color:var(--gray-muted);text-decoration:line-through}
+/* TIP CARD */
+.tip-card{background:#fffbea;border-radius:var(--r);border:.5px solid #f5d700;padding:10px 12px;margin-bottom:6px}
+.tip-t{font-size:10px;font-weight:700;color:#7a6000;margin-bottom:5px;display:flex;align-items:center;gap:4px}
+.tip-i{font-size:10px;color:#7a6000;line-height:1.5}
+.warn-card{background:#fdecea;border-radius:var(--r);border:.5px solid #f5a5a5;padding:10px 12px;margin-bottom:6px}
+.warn-t{font-size:10px;font-weight:700;color:#8a0000;margin-bottom:5px;display:flex;align-items:center;gap:4px}
+.warn-i{font-size:10px;color:#8a0000;line-height:1.5}
+/* EQUIPAJE */
+.eq{background:#fff;border-radius:var(--r);border:.5px solid var(--gray-border);padding:10px 11px;margin-bottom:6px;box-shadow:var(--sc)}
+.eq-top{display:flex;align-items:center;gap:9px}
+.eq-i{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.eq-n{font-size:11px;font-weight:700;color:var(--gray-text)}
+.eq-d{font-size:9px;color:var(--gray-muted);margin-top:1px;line-height:1.4}
+.eq-btns{display:flex;gap:5px;margin-top:8px;padding-top:7px;border-top:.5px solid #f0f0f0}
+.eb{flex:1;border:none;border-radius:var(--rb);padding:6px;font-size:9px;font-weight:700;cursor:pointer;color:#fff;text-align:center;font-family:var(--font);transition:var(--tr);text-decoration:none;display:flex;align-items:center;justify-content:center;gap:3px}
+.eb:hover{opacity:.85}
+.eb-or{background:var(--orange)}.eb-bl{background:var(--blue)}.eb-gr{background:var(--green)}.eb-rd{background:var(--red)}
+/* RESEÑAS */
+.rv{background:#fff;border-radius:var(--r);border:.5px solid var(--gray-border);padding:11px 12px;margin-bottom:7px;box-shadow:var(--sc)}
+.rv-t{font-size:11px;font-weight:700;color:var(--gray-text);margin-bottom:7px}
+.stars{display:flex;gap:4px;margin-bottom:9px}
+.star{font-size:24px;color:var(--orange);cursor:pointer;transition:var(--tr)}
+.star.e{color:#e5e7eb}
+.star:hover{transform:scale(1.2)}
+.big-btn{width:100%;border:none;border-radius:12px;padding:10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:var(--font);text-decoration:none;color:#fff;background:var(--blue)}
+.big-btn:hover{opacity:.88}
+.up-box{border:2px dashed var(--orange);border-radius:12px;padding:13px;text-align:center;cursor:pointer;margin-bottom:9px;background:#fff9f5;transition:var(--tr)}
+.up-box:hover{background:#fff3e6}
+.up-ico{font-size:24px;margin-bottom:4px}
+.up-l{font-size:11px;color:var(--orange);font-weight:700}
+.up-s{font-size:9px;color:var(--gray-muted);margin-top:1px}
+.priv{display:flex;gap:6px;align-items:flex-start;margin-bottom:9px}
+.priv input{accent-color:var(--blue);margin-top:2px;flex-shrink:0}
+.priv-t{font-size:9px;color:#777;line-height:1.6}
+.priv-t a{color:var(--blue);text-decoration:none}
+.soc{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.soc-btn{border:none;border-radius:9px;padding:8px 5px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:#fff;font-family:var(--font);text-decoration:none;transition:var(--tr)}
+.soc-btn:hover{opacity:.85;transform:scale(.97)}
+/* TOAST */
+#toast{position:fixed;bottom:85px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 18px;border-radius:12px;font-size:11px;font-family:var(--font);font-weight:600;z-index:9999;max-width:86%;text-align:center;line-height:1.5;box-shadow:0 4px 20px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .3s}
+#toast.show{opacity:1}
+/* HOTEL APP */
+.hotel-center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:32px 20px;flex:1}
+/* LOADING */
+#ls{position:fixed;inset:0;background:var(--blue);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s ease}
+.ls-logo{width:90px;height:90px;border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,.4);margin-bottom:20px;animation:pulse 2s infinite}
+.ls-logo img{width:100%;height:100%;object-fit:cover;display:block}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.4)}50%{box-shadow:0 0 0 16px rgba(255,255,255,0)}}
+.ls-title{font-size:22px;font-weight:800;color:#fff;font-family:"Playfair Display",serif;margin-bottom:5px}
+.ls-sub{font-size:12px;color:rgba(255,255,255,.7);font-style:italic}
+.dots{display:flex;gap:6px;margin-top:22px}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.6);animation:db 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes db{0%,80%,100%{opacity:.3}40%{opacity:1}}
+/* Leaflet popups */
+.leaflet-popup-content-wrapper{border-radius:10px;font-family:var(--font);font-size:11px}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- LOADING -->
+<div id="ls">
+  <div class="ls-logo"><img src="data:image/jpeg;base64,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" alt="Citimar"></div>
+  <div class="ls-title">Citimar Travel</div>
+  <div class="ls-sub">Viaja por Cielo, Tierra y Mar</div>
+  <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+</div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="sb-logo"><img src="data:image/jpeg;base64,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" alt="Citimar"></div>
+      <div><div class="sb-name">Citimar Travel</div><div class="sb-url">viajes.citimartravel.com</div></div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-i on" onclick="go('home')"><span class="sb-ico">🏠</span>Inicio</div>
+      <div class="sb-i" onclick="go('viaje')"><span class="sb-ico">✈️</span>Tu Viaje</div>
+      <div class="sb-i" onclick="go('equip')"><span class="sb-ico">🧳</span>Equipaje</div>
+      <div class="sb-i" onclick="go('hotel')"><span class="sb-ico">🏨</span>App Hotel</div>
+      <div class="sb-i off" id="sb-iti"><span class="sb-ico">🗺️</span>Itinerario<span class="sb-tag">Inactivo</span></div>
+      <div class="sb-i off" id="sb-lug"><span class="sb-ico">📍</span>Lugares<span class="sb-tag">Inactivo</span></div>
+      <div class="sb-i" onclick="go('reviews')"><span class="sb-ico">⭐</span>Reseñas y Fotos</div>
+    </nav>
+    <div class="sb-foot">
+      <a href="https://wa.me/525649169773" target="_blank" class="sb-wa">📲 Agente de Viajes</a>
+    </div>
+  </aside>
+
+  <div class="main">
+
+    <!-- ══ INICIO ══ -->
+    <div class="screen on" id="s-home">
+      <div class="hero">
+        <div class="hero-photo">
+          <span class="hero-icon">🏨</span>
+          <div class="hero-grad"></div>
+        </div>
+        <div class="hero-content">
+          <div class="hero-logo"><img src="data:image/jpeg;base64,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" alt="Citimar"></div>
+          <div class="hero-body">
+            <div class="h-name" id="c-nombre">Bienvenido</div>
+            <div class="h-hotel" id="c-hotel"></div>
+            <div class="h-dates" id="c-fechas"></div>
+          </div>
+          <div class="hero-cd">
+            <div class="cd-n" id="c-dias">—</div>
+            <div class="cd-t">días para<br>tu viaje ✈️</div>
+          </div>
+          <a href="https://wa.me/525649169773" target="_blank" class="hero-wa">
+            <span>📲</span><span>Contacta a tu Agente de Viajes</span>
+          </a>
+        </div>
+      </div>
+      <div class="slist">
+        <div class="sc" onclick="go('viaje')"><div class="sc-ico" style="background:var(--blue-light)">✈️</div><div><div class="sc-t">Tu Viaje</div><div class="sc-s">Vuelos · Traslados · Hotel · Tours</div></div><div class="sc-arr">›</div></div>
+        <div class="sc" onclick="go('equip')"><div class="sc-ico" style="background:var(--orange-light)">🧳</div><div><div class="sc-t">Equipaje</div><div class="sc-s">Checklist inteligente · PackPoint</div></div><div class="sc-arr">›</div></div>
+        <div class="sc" onclick="go('hotel')"><div class="sc-ico" style="background:var(--green-light)">🏨</div><div><div class="sc-t">App Hotel</div><div class="sc-s" id="c-hotel-nombre">App del hotel</div></div><div class="sc-arr">›</div></div>
+        <div class="sc off" id="card-iti"><div class="sc-ico" style="background:#f0f0f0">🗺️</div><div><div class="sc-t">Itinerario</div><div class="sc-s">No activo en este viaje</div></div><div class="sc-off-tag">Inactivo</div></div>
+        <div class="sc off" id="card-lug"><div class="sc-ico" style="background:#f0f0f0">📍</div><div><div class="sc-t">Lugares Imperdibles</div><div class="sc-s">No activo en este viaje</div></div><div class="sc-off-tag">Inactivo</div></div>
+        <div class="sc" onclick="go('reviews')"><div class="sc-ico" style="background:#fef3e2">⭐</div><div><div class="sc-t">Reseñas y Fotos</div><div class="sc-s">Comparte tu experiencia</div></div><div class="sc-arr">›</div></div>
+      </div>
+      <nav class="bnav">
+        <div class="bn" onclick="go('home')"><span class="bn-i">🏠</span><span class="bn-l on">Inicio</span></div>
+        <div class="bn" onclick="go('viaje')"><span class="bn-i">✈️</span><span class="bn-l">Tu Viaje</span></div>
+        <div class="bn" onclick="go('equip')"><span class="bn-i">🧳</span><span class="bn-l">Equipaje</span></div>
+        <div class="bn" onclick="go('reviews')"><span class="bn-i">⭐</span><span class="bn-l">Reseñas</span></div>
+      </nav>
+    </div>
+
+    <!-- ══ TU VIAJE ══ -->
+    <div class="screen" id="s-viaje">
+      <div class="ih"><button class="bk" onclick="go('home')">‹</button><div class="ih-acc"></div><span class="ih-t">Tu Viaje</span></div>
+      <div class="ib">
+        <div class="slbl">Documentos de viaje</div>
+        <div class="dc"><div class="di" style="background:var(--blue-light)">✈️</div><div class="dif"><div class="dt">Vuelos · Pases de abordar</div><div class="ds" id="c-vuelo-info"></div></div><button class="pb pb-bl" onclick="abrirLink('vuelos')">📄 PDF</button></div>
+        <div class="dc"><div class="di" style="background:var(--green-light)">🚐</div><div class="dif"><div class="dt">Traslados</div><div class="ds">Aeropuerto → Hotel → Aeropuerto</div></div><button class="pb pb-bl" onclick="abrirLink('traslados')">📄 PDF</button></div>
+        <div class="dc"><div class="di" style="background:var(--orange-light)">🏨</div><div class="dif"><div class="dt">Hospedaje</div><div class="ds">Confirmación de reservación</div></div><button class="pb pb-or" onclick="abrirLink('hospedaje')">📄 PDF</button></div>
+        <div class="dc"><div class="di" style="background:#f3e5f5">🎭</div><div class="dif"><div class="dt">Tours</div><div class="ds">Vouchers y confirmaciones</div></div><button class="pb pb-or" onclick="abrirLink('tours')">📄 PDF</button></div>
+        <div class="slbl">Ruta en vivo</div>
+        <div class="map-wrapper">
+          <div id="leaflet-map"></div>
+          <div class="map-foot">
+            <div class="map-ruta" id="map-ruta-label">—</div>
+            <a id="map-live-link" href="https://www.flightaware.com/live/" target="_blank" class="map-link">🗺️ Ver en vivo ›</a>
+          </div>
+        </div>
+
+        <!-- VUELO IDA (solo si tiene avión) -->
+        <div id="bloque-vuelo-ida" style="display:none">
+          <div class="slbl">✈️ Vuelo de ida</div>
+          <div class="vc">
+            <div style="background:var(--blue-light);border-radius:10px;padding:10px 12px;margin-bottom:10px">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+                <div>
+                  <div style="font-size:18px;font-weight:800;color:var(--gray-text)" id="c-vuelo-num">—</div>
+                  <div style="font-size:10px;color:var(--gray-muted)" id="c-vuelo-ruta">—</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:11px;font-weight:700;color:var(--gray-text)" id="c-vuelo-fecha">—</div>
+                  <div style="font-size:9px;color:var(--gray-muted)" id="c-aerolinea-nom">—</div>
+                </div>
+              </div>
+            </div>
+            <div class="vc-btns">
+              <a id="btn-estatus" href="https://www.flightaware.com/live/" target="_blank" class="vb vb-bl">📊 Estado del vuelo</a>
+              <a id="btn-flightaware" href="https://www.flightaware.com/live/" target="_blank" class="vb vb-or">🗺️ Mapa en vivo</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- VUELO REGRESO (solo si tiene vuelo_regreso_info) -->
+        <div id="bloque-vuelo-regreso" style="display:none">
+          <div class="slbl">↩️ Vuelo de regreso</div>
+          <div class="vc">
+            <div style="background:#fff4ec;border-radius:10px;padding:10px 12px;margin-bottom:10px">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+                <div>
+                  <div style="font-size:18px;font-weight:800;color:var(--gray-text)" id="c-vuelo-reg-num">—</div>
+                  <div style="font-size:10px;color:var(--gray-muted)" id="c-vuelo-reg-ruta">—</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:11px;font-weight:700;color:var(--gray-text)" id="c-vuelo-reg-fecha">—</div>
+                  <div style="font-size:9px;color:var(--gray-muted)" id="c-aerolinea-reg-nom">—</div>
+                </div>
+              </div>
+            </div>
+            <div class="vc-btns">
+              <a id="btn-reg-estatus" href="https://www.flightaware.com/live/" target="_blank" class="vb vb-or">📊 Estado del regreso</a>
+              <a id="btn-reg-flightaware" href="https://www.flightaware.com/live/" target="_blank" class="vb" style="background:#2e7d32;color:#fff">🗺️ Mapa regreso</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- TRASLADO TERRESTRE (solo si transporte = terrestre) -->
+        <div id="bloque-terrestre" style="display:none">
+          <div class="slbl">🚗 Tu traslado terrestre</div>
+          <div class="vc">
+            <div style="background:#e8f5e9;border-radius:10px;padding:10px 12px;margin-bottom:10px">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+                <div>
+                  <div style="font-size:16px;font-weight:800;color:#1b5e20" id="c-traslado-info">—</div>
+                  <div style="font-size:10px;color:#388e3c;margin-top:3px" id="c-traslado-det">—</div>
+                </div>
+                <div style="font-size:22px">🚌</div>
+              </div>
+            </div>
+            <div style="font-size:9px;color:var(--gray-muted);margin-bottom:6px;text-align:center">Consulta el estado en tiempo real de tu ruta:</div>
+            <div class="vc-btns" style="margin-bottom:6px">
+              <a id="btn-googlemaps" href="https://maps.google.com" target="_blank" class="vb" style="background:#34A853;color:#fff">🗺️ Google Maps</a>
+              <a id="btn-waze" href="https://waze.com" target="_blank" class="vb" style="background:#33CCFF;color:#1a1a2e">🔵 Waze</a>
+            </div>
+            <div class="vc-btns">
+              <a id="btn-via-ado" href="https://www.ado.com.mx" target="_blank" class="vb" style="background:#d11223;color:#fff">🚌 ADO</a>
+              <a href="https://wa.me/525649169773" target="_blank" class="vb" style="background:#25D366;color:#fff">📲 Agente</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- SELECTOR AEROLÍNEA (siempre visible si tiene vuelo) -->
+        <div id="bloque-selector-al" style="display:none">
+          <div style="font-size:9px;color:var(--gray-muted);text-align:center;margin-bottom:4px">Cambia la aerolínea si es necesario:</div>
+          <select class="vc-sel" id="sel-aerolinea" onchange="actualizarAerolinea()">
+            <option value="volaris">Volaris</option>
+            <option value="aeromexico">Aeroméxico</option>
+            <option value="vivaaerobus">VivaAerobus</option>
+            <option value="american">American Airlines</option>
+            <option value="united">United Airlines</option>
+            <option value="delta">Delta</option>
+            <option value="lufthansa">Lufthansa</option>
+            <option value="copa">Copa Airlines</option>
+            <option value="otro">Otra aerolínea / buscar en FlightAware</option>
+          </select>
+        </div>
+      </div>
+      <nav class="bnav">
+        <div class="bn" onclick="go('home')"><span class="bn-i">🏠</span><span class="bn-l">Inicio</span></div>
+        <div class="bn" onclick="go('viaje')"><span class="bn-i">✈️</span><span class="bn-l on">Tu Viaje</span></div>
+        <div class="bn" onclick="go('equip')"><span class="bn-i">🧳</span><span class="bn-l">Equipaje</span></div>
+        <div class="bn" onclick="go('reviews')"><span class="bn-i">⭐</span><span class="bn-l">Reseñas</span></div>
+      </nav>
+    </div>
+
+    <!-- ══ EQUIPAJE ══ -->
+    <div class="screen" id="s-equip">
+      <div class="ih"><button class="bk" onclick="go('home')">‹</button><div class="ih-acc"></div><span class="ih-t">Equipaje</span></div>
+      <div class="ib" id="equip-body"></div>
+      <nav class="bnav">
+        <div class="bn" onclick="go('home')"><span class="bn-i">🏠</span><span class="bn-l">Inicio</span></div>
+        <div class="bn" onclick="go('viaje')"><span class="bn-i">✈️</span><span class="bn-l">Tu Viaje</span></div>
+        <div class="bn" onclick="go('equip')"><span class="bn-i">🧳</span><span class="bn-l on">Equipaje</span></div>
+        <div class="bn" onclick="go('reviews')"><span class="bn-i">⭐</span><span class="bn-l">Reseñas</span></div>
+      </nav>
+    </div>
+
+    <!-- ══ APP HOTEL ══ -->
+    <div class="screen" id="s-hotel">
+      <div class="ih"><button class="bk" onclick="go('home')">‹</button><div class="ih-acc"></div><span class="ih-t">App Hotel</span></div>
+      <div class="hotel-center">
+        <div style="font-size:58px">🏨</div>
+        <div style="font-size:15px;font-weight:700;color:var(--gray-text)" id="c-hotel-app">App del Hotel</div>
+        <div style="font-size:12px;color:var(--gray-muted);line-height:1.6;max-width:280px">Descarga o abre la app oficial de tu hotel para servicios, restaurantes y actividades.</div>
+        <button class="big-btn" style="max-width:280px" onclick="abrirLink('hotel_app')">🏨 Abrir App del Hotel</button>
+      </div>
+      <nav class="bnav">
+        <div class="bn" onclick="go('home')"><span class="bn-i">🏠</span><span class="bn-l">Inicio</span></div>
+        <div class="bn" onclick="go('viaje')"><span class="bn-i">✈️</span><span class="bn-l">Tu Viaje</span></div>
+        <div class="bn" onclick="go('equip')"><span class="bn-i">🧳</span><span class="bn-l">Equipaje</span></div>
+        <div class="bn" onclick="go('reviews')"><span class="bn-i">⭐</span><span class="bn-l">Reseñas</span></div>
+      </nav>
+    </div>
+
+    <!-- ══ ITINERARIO ══ -->
+    <div class="screen" id="s-iti">
+      <div class="ih"><button class="bk" onclick="go('home')">‹</button><div class="ih-acc"></div><span class="ih-t">Itinerario</span></div>
+      <div class="ib">
+        <div class="slbl">Tu programa de viaje</div>
+        <div class="dc"><div class="di" style="background:var(--blue-light)">🗺️</div><div class="dif"><div class="dt">Itinerario completo</div><div class="ds">Programa día a día de tu viaje</div></div><button class="pb pb-bl" onclick="abrirLink('itinerario')">📄 PDF</button></div>
+      </div>
+      <nav class="bnav">
+        <div class="bn" onclick="go('home')"><span class="bn-i">🏠</span><span class="bn-l">Inicio</span></div>
+        <div class="bn" onclick="go('viaje')"><span class="bn-i">✈️</span><span class="bn-l">Tu Viaje</span></div>
+        <div class="bn" onclick="go('equip')"><span class="bn-i">🧳</span><span class="bn-l">Equipaje</span></div>
+        <div class="bn" onclick="go('reviews')"><span class="bn-i">⭐</span><span class="bn-l">Reseñas</span></div>
+      </nav>
+    </div>
+
+    <!-- ══ LUGARES ══ -->
+    <div class="screen" id="s-lug">
+      <div class="ih"><button class="bk" onclick="go('home')">‹</button><div class="ih-acc"></div><span class="ih-t">Lugares Imperdibles</span></div>
+      <div class="ib">
+        <div class="slbl">Recomendaciones de tu agente</div>
+        <div class="dc"><div class="di" style="background:#fef3e2">📍</div><div class="dif"><div class="dt">Guía de lugares</div><div class="ds">Lugares que no te puedes perder</div></div><button class="pb pb-or" onclick="abrirLink('lugares')">📄 PDF</button></div>
+      </div>
+      <nav class="bnav">
+        <div class="bn" onclick="go('home')"><span class="bn-i">🏠</span><span class="bn-l">Inicio</span></div>
+        <div class="bn" onclick="go('viaje')"><span class="bn-i">✈️</span><span class="bn-l">Tu Viaje</span></div>
+        <div class="bn" onclick="go('equip')"><span class="bn-i">🧳</span><span class="bn-l">Equipaje</span></div>
+        <div class="bn" onclick="go('reviews')"><span class="bn-i">⭐</span><span class="bn-l">Reseñas</span></div>
+      </nav>
+    </div>
+
+    <!-- ══ RESEÑAS ══ -->
+    <div class="screen" id="s-reviews">
+      <div class="ih"><button class="bk" onclick="go('home')">‹</button><div class="ih-acc"></div><span class="ih-t">Tu Experiencia</span></div>
+      <div class="ib">
+        <div class="rv">
+          <div class="rv-t">⭐ ¿Cómo calificarías tu viaje con Citimar?</div>
+          <div class="stars" id="stars">
+            <span class="star e" onclick="setStars(1)">★</span><span class="star e" onclick="setStars(2)">★</span>
+            <span class="star e" onclick="setStars(3)">★</span><span class="star e" onclick="setStars(4)">★</span>
+            <span class="star e" onclick="setStars(5)">★</span>
+          </div>
+          <a href="https://docs.google.com/forms/d/e/1FAIpQLScHIyRg6z6LTfs4I6Ld7SUjMpY0YV6vz98Ey9X5fWlB0JDaew/viewform" target="_blank" class="big-btn">📋 Llenar cuestionario completo</a>
+        </div>
+        <div class="rv">
+          <div class="rv-t">📷 Comparte tus fotos con Citimar</div>
+          <div class="up-box" onclick="subirFotos()">
+            <div class="up-ico">📷</div>
+            <div class="up-l">Subir fotos de mi viaje</div>
+            <div class="up-s">Toca para compartir por WhatsApp</div>
+          </div>
+          <div class="priv">
+            <input type="checkbox" id="priv-ok" checked>
+            <div class="priv-t">Autorizo a Citimar Travel Agency a publicar mis fotos en redes sociales y página web. <a href="https://acortar.link/k25PJz" target="_blank">Aviso de Privacidad</a></div>
+          </div>
+        </div>
+        <div class="rv">
+          <div class="rv-t">🌐 Síguenos y déjanos tu reseña</div>
+          <div class="soc">
+            <a href="https://www.facebook.com/CitimarTravelAgency" target="_blank" class="soc-btn" style="background:#1877F2">📘 Citimar Travel</a>
+            <a href="https://www.instagram.com/lizette_traveldesignermx" target="_blank" class="soc-btn" style="background:#E1306C">📸 @lizette_mx</a>
+            <a href="https://www.facebook.com/share/1BLTHbxEV9/" target="_blank" class="soc-btn" style="background:#1877F2">📘 Lizette Travel1</a>
+            <a href="https://wa.me/525649169773" target="_blank" class="soc-btn" style="background:#25D366">📲 WhatsApp</a>
+          </div>
+        </div>
+      </div>
+      <nav class="bnav">
+        <div class="bn" onclick="go('home')"><span class="bn-i">🏠</span><span class="bn-l">Inicio</span></div>
+        <div class="bn" onclick="go('viaje')"><span class="bn-i">✈️</span><span class="bn-l">Tu Viaje</span></div>
+        <div class="bn" onclick="go('equip')"><span class="bn-i">🧳</span><span class="bn-l">Equipaje</span></div>
+        <div class="bn" onclick="go('reviews')"><span class="bn-i">⭐</span><span class="bn-l on">Reseñas</span></div>
+      </nav>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBsQqq1TDc_Uy7QkM55885CvjW99IJE07I",
+  authDomain: "citimar-viajes.firebaseapp.com",
+  projectId: "citimar-viajes",
+  storageBucket: "citimar-viajes.firebasestorage.app",
+  messagingSenderId: "981735100725",
+  appId: "1:981735100725:web:fdd7281cc7f7dc0ce6fc7c"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+/* ═══ AEROLÍNEAS ═══ */
+const AEROLINEAS = {
+  volaris:     "https://www.volaris.com/flightstatus?culture=es-MX",
+  aeromexico:  "https://www.aeromexico.com/es-us/estatus-de-vuelo",
+  vivaaerobus: "https://www.vivaaerobus.com/es-mx/flight-status",
+  american:    "https://www.aa.com/travelInformation/flights/status",
+  united:      "https://www.united.com/ual/es/mx/flight-search/flight-status",
+  delta:       "https://es.delta.com/mx/es/estado-del-vuelo/hoy",
+  lufthansa:   "https://www.lufthansa.com/mx/es/informacion-del-vuelo",
+  copa:        "https://www.copaair.com/es/web/mx/estado-del-vuelo",
+  otro:        "https://www.flightaware.com/live/"
+};
+
+let C = null;
+let checkState = {};
+let mapInit = false;
+
+/* ── URL ID ── */
+function getClienteId(){
+  return new URLSearchParams(window.location.search).get("id") || null;
+}
+
+/* ── ABRIR LINK ── */
+window.abrirLink = function(key){
+  if(!C||!C.links){toast("⏳ Cargando datos...");return;}
+  const url = C.links[key];
+  if(!url||url.trim()===""){toast("📩 Tu agente te enviará este documento pronto.");return;}
+  window.open(url,"_blank");
+};
+
+/* ── TOAST ── */
+window.toast = function(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.classList.add("show");
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),3500);
+};
+
+/* ── AEROLÍNEA ── */
+window.actualizarAerolinea = function(){
+  const val=document.getElementById("sel-aerolinea").value;
+  const baseUrl=AEROLINEAS[val]||AEROLINEAS.otro;
+  const btnE=document.getElementById("btn-estatus");
+  if(btnE)btnE.href=baseUrl;
+  // Si hay número de vuelo, actualizar FlightAware
+  if(C&&(C.vuelo_num||C.vuelo_info)){
+    const numIda=(C.vuelo_num||C.vuelo_info.split("·")[0]).replace(/\s/g,"");
+    const fa=document.getElementById("btn-flightaware");
+    if(fa&&numIda)fa.href="https://www.flightaware.com/live/flight/"+encodeURIComponent(numIda);
+  }
+};
+
+/* ── COORDENADAS DE CIUDADES ── */
+const COORDS={
+  // México - por nombre completo (primero, más prioritarios)
+  "Paya del Carmen":[20.6296,-87.0739],"Playa del Carmen":[20.6296,-87.0739],
+  "Riviera Maya":[20.6296,-87.0739],
+  "Ciudad de México":[19.4326,-99.1332],"Mexico City":[19.4326,-99.1332],
+  "Guadalajara":[20.6597,-103.3496],
+  "Monterrey":[25.6866,-100.3161],
+  "Mérida":[20.9674,-89.5926],"Merida":[20.9674,-89.5926],
+  "Cancún":[21.0365,-86.8771],"Cancun":[21.0365,-86.8771],
+  "Los Cabos":[22.8905,-109.9167],"Cabo":[22.8905,-109.9167],
+  "Puerto Vallarta":[20.6534,-105.2253],
+  "Oaxaca":[17.0732,-96.7266],
+  "Huatulco":[15.7758,-96.1322],
+  "Acapulco":[16.8531,-99.8237],
+  "Puebla":[19.0414,-98.2063],
+  "Veracruz":[19.1738,-96.1342],
+  "Mazatlán":[23.2494,-106.4111],"Mazatlan":[23.2494,-106.4111],
+  "Ixtapa":[17.6667,-101.55],
+  "Tulum":[20.211,-87.465],
+  "Campeche":[19.8301,-90.5349],
+  "Chetumal":[18.5001,-88.2960],
+  "San Cristóbal":[16.737,-92.637],
+  "Chihuahua":[28.6353,-106.0889],
+  "Tijuana":[32.5149,-117.0382],
+  "Hermosillo":[29.0729,-110.9559],
+  "Culiacán":[24.7994,-107.3898],
+  "La Paz":[24.1426,-110.3128],
+  "Manzanillo":[19.0514,-104.3160],
+  "Zihuatanejo":[17.6524,-101.5496],
+  "Tampico":[22.2331,-97.8617],
+  "León":[21.1221,-101.6729],
+  "Morelia":[19.7060,-101.1950],
+  "Querétaro":[20.5888,-100.3899],
+  "San Luis Potosí":[22.1565,-100.9855],
+  "Durango":[24.0277,-104.6532],
+  "Tuxtla Gutiérrez":[16.7521,-93.1152],
+  "Villahermosa":[17.9894,-92.9475],
+  // Internacionales
+  "Miami":[25.7617,-80.1918],
+  "Nueva York":[40.7128,-74.006],"New York":[40.7128,-74.006],
+  "Madrid":[40.4168,-3.7038],
+  "París":[48.8566,2.3522],"Paris":[48.8566,2.3522],
+  "Londres":[51.5074,-0.1278],"London":[51.5074,-0.1278],
+  "Roma":[41.9028,12.4964],"Rome":[41.9028,12.4964],
+  "Bogotá":[4.7110,-74.0721],"Bogota":[4.7110,-74.0721],
+  "Lima":[-12.0464,-77.0428],
+  "Buenos Aires":[-34.6037,-58.3816],
+  "Houston":[29.7604,-95.3698],
+  "Dallas":[32.7767,-96.7970],
+  "Los Angeles":[34.0522,-118.2437],
+  "Chicago":[41.8781,-87.6298],
+  "Toronto":[43.6532,-79.3832],
+  "Cuba":[22.3,-79.0],"La Habana":[23.1136,-82.3666],
+  // IATA codes (después de nombres, menor prioridad)
+  "CDMX":[19.4326,-99.1332],"MEX ":[19.4326,-99.1332],
+  " CUN":[21.0365,-86.8771]," GDL":[20.6597,-103.3496],
+  " MTY":[25.6866,-100.3161]," MID":[20.9674,-89.5926],
+  " SJD":[22.8905,-109.9167]," PVR":[20.6534,-105.2253],
+  " OAX":[17.0732,-96.7266]," HUX":[15.7758,-96.1322],
+  " ACA":[16.8531,-99.8237]," PBC":[19.0414,-98.2063],
+  " VER":[19.1738,-96.1342]," MZT":[23.2494,-106.4111],
+  " ZIH":[17.6667,-101.55]," MIA":[25.7617,-80.1918],
+  " JFK":[40.7128,-74.006]," MAD":[40.4168,-3.7038],
+  " CDG":[48.8566,2.3522]," BOG":[4.7110,-74.0721],
+  " LIM":[-12.0464,-77.0428]," EZE":[-34.8222,-58.5358],
+  " LAX":[34.0522,-118.2437]," ORD":[41.8781,-87.6298],
+  " IAH":[29.9902,-95.3368]," DFW":[32.8998,-97.0403],
+};
+
+function getCoordsFromText(text){
+  if(!text)return null;
+  const up=text.toUpperCase();
+  // Buscar por clave exacta primero
+  for(const [key,val] of Object.entries(COORDS)){
+    if(up.includes(key.toUpperCase()))return val;
+  }
+  return null;
+}
+
+// Obtener coordenadas destino desde vuelo_info: "102 · CDMX → CUN"
+// Busca la parte DESPUÉS de la flecha → 
+function getCoordsDestinoVuelo(vuelo_info){
+  if(!vuelo_info) return null;
+  const partes=vuelo_info.split("→");
+  if(partes.length>1){
+    const destPart=" "+partes[partes.length-1].trim()+" ";
+    const r=getCoordsFromText(destPart);
+    if(r) return r;
+  }
+  return getCoordsFromText(vuelo_info);
+}
+
+function getCoordsOrigenVuelo(vuelo_info){
+  if(!vuelo_info) return null;
+  const partes=vuelo_info.split("→");
+  if(partes.length>1){
+    // Parte antes de la flecha, después del número de vuelo
+    const orig=partes[0].split("·").pop().trim();
+    const r=getCoordsFromText(" "+orig+" ");
+    if(r) return r;
+  }
+  return null;
+}
+
+/* ── MAPA LEAFLET (dinámico por cliente) ── */
+function initLeafletMap(){
+  if(mapInit)return; mapInit=true;
+  const map=L.map("leaflet-map",{zoomControl:false,attributionControl:false,dragging:true,scrollWheelZoom:false});
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18}).addTo(map);
+
+  // ── Detectar coordenadas (prioridad: campo explícito > vuelo_info > default) ──
+  let origen=null, destino=null, origenNom="Ciudad de México", destinoNom="Destino";
+  const esTerrestre=C&&C.transporte==="terrestre";
+
+  if(C){
+    // Origen
+    if(C.ciudad_origen){
+      origen=getCoordsFromText(C.ciudad_origen);
+      origenNom=C.ciudad_origen;
+    }
+    if(!origen&&C.vuelo_info){
+      origen=getCoordsOrigenVuelo(C.vuelo_info)||[19.4326,-99.1332];
+    }
+    if(!origen) origen=[19.4326,-99.1332];
+
+    // Destino — primero campo explícito, luego extraer de vuelo_info
+    if(C.ciudad_destino){
+      destino=getCoordsFromText(C.ciudad_destino);
+      destinoNom=C.ciudad_destino;
+    }
+    if(!destino&&C.vuelo_info){
+      destino=getCoordsDestinoVuelo(C.vuelo_info);
+    }
+    if(!destino&&C.hotel){
+      destino=getCoordsFromText(C.hotel);
+    }
+    if(!destino) destino=[21.0365,-86.8771]; // default Cancún
+
+    // Nombres amigables
+    if(!C.ciudad_destino&&C.vuelo_info){
+      const p=C.vuelo_info.split("→");
+      if(p.length>1) destinoNom=p[p.length-1].trim();
+    }
+    if(!C.ciudad_origen&&C.vuelo_info){
+      const p=C.vuelo_info.split("→");
+      if(p.length>1){
+        const orig=p[0].split("·");
+        origenNom=orig.length>1?orig[orig.length-1].trim():orig[0].trim();
+      }
+    }
+  }
+
+  // Verificar que origen y destino son diferentes (evita zoom a nivel calle)
+  const mismoPunto=(Math.abs(origen[0]-destino[0])<0.1&&Math.abs(origen[1]-destino[1])<0.1);
+  if(mismoPunto) destino=[21.0365,-86.8771]; // fallback Cancún
+
+  map.fitBounds(L.latLngBounds([origen,destino]).pad(0.25));
+
+  const blueIco=L.divIcon({html:'<div style="background:#027fb9;width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)"></div>',className:"",iconAnchor:[7,7]});
+  const redIco =L.divIcon({html:'<div style="background:#d86919;width:16px;height:16px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5)"></div>',className:"",iconAnchor:[8,8]});
+  const greenIco=L.divIcon({html:'<div style="background:#2e7d32;width:16px;height:16px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5)"></div>',className:"",iconAnchor:[8,8]});
+
+  L.marker(origen,{icon:blueIco}).addTo(map).bindPopup("<b>"+origenNom+"</b><br>📍 Punto de salida",{closeButton:false});
+  L.marker(destino,{icon:esTerrestre?greenIco:redIco}).addTo(map).bindPopup("<b>"+destinoNom+"</b><br>"+(esTerrestre?"🏁 Tu destino":"✈️ Aterrizas aquí"),{closeButton:false});
+
+  if(esTerrestre){
+    // Ruta terrestre: línea verde sólida
+    L.polyline([origen,destino],{color:"#2e7d32",weight:3,opacity:.9}).addTo(map);
+  } else {
+    // Ruta aérea: línea naranja curva punteada
+    const midLat=(origen[0]+destino[0])/2;
+    const midLng=(origen[1]+destino[1])/2-2.5;
+    L.polyline([origen,[midLat,midLng],destino],{color:"#d86919",weight:2.5,dashArray:"8,6",opacity:.9}).addTo(map);
+  }
+
+  // Actualizar pie del mapa
+  const lbl=document.getElementById("map-ruta-label");
+  if(lbl) lbl.innerHTML='<span style="color:#027fb9;font-weight:700">'+origenNom+'</span> <span style="color:#999">→</span> <span style="color:#d86919;font-weight:700">'+destinoNom+'</span>';
+
+  const liveLink=document.getElementById("map-live-link");
+  if(liveLink){
+    if(esTerrestre){
+      // Google Maps con modo conducción
+      liveLink.href="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(origenNom+", México")+"&destination="+encodeURIComponent(destinoNom+", México")+"&travelmode=driving";
+      liveLink.innerHTML="🚗 Ver ruta en Maps ›";
+    } else {
+      // FlightAware con número de vuelo si existe
+      const numV=(C&&(C.vuelo_num||""))||"";
+      const numExtraido=(C&&C.vuelo_info)?C.vuelo_info.split("·")[0].replace(/[^A-Z0-9]/gi,"").trim():"";
+      const numFinal=numV.replace(/\s/g,"")||numExtraido;
+      liveLink.href=numFinal?"https://www.flightaware.com/live/flight/"+encodeURIComponent(numFinal):"https://www.flightaware.com/live/";
+      liveLink.innerHTML="✈️ Ver en FlightAware ›";
+    }
+  }
+}
+
+/* ── INICIALIZAR UI ── */
+function init(data){
+  C=data;
+  document.getElementById("c-nombre").textContent=C.nombre||"Viajero";
+  document.getElementById("c-hotel").textContent=C.hotel||"";
+  document.getElementById("c-fechas").textContent=C.fechas||"";
+  document.getElementById("c-vuelo-info").textContent=C.vuelo_info||"";
+  document.getElementById("c-hotel-nombre").textContent=C.hotel_nombre||"App del hotel";
+  document.getElementById("c-hotel-app").textContent=C.hotel_nombre||"App del Hotel";
+
+  // ── HELPERS ──
+  const nombresAl={volaris:"Volaris",aeromexico:"Aeroméxico",vivaaerobus:"VivaAerobus",american:"American Airlines",united:"United Airlines",delta:"Delta",lufthansa:"Lufthansa",copa:"Copa Airlines",otro:"Aerolínea"};
+  const deepLinks={volaris:"https://www.volaris.com/flightstatus?culture=es-MX",aeromexico:"https://www.aeromexico.com/es-us/estatus-de-vuelo",vivaaerobus:"https://www.vivaaerobus.com/es-mx/flight-status",american:"https://www.aa.com/travelInformation/flights/status",united:"https://www.united.com/ual/es/mx/flight-search/flight-status",delta:"https://es.delta.com/mx/es/estado-del-vuelo/hoy",lufthansa:"https://www.lufthansa.com/mx/es/informacion-del-vuelo",copa:"https://www.copaair.com/es/web/mx/estado-del-vuelo"};
+
+  function extraerNumVuelo(str){
+    if(!str)return"";
+    const m=str.match(/([A-Z0-9]{2,3}\s?\d{2,4})/);
+    return m?m[1].replace(/\s/g,""):str.split("·")[0].trim();
+  }
+  function fechaLinda(iso){
+    if(!iso)return"";
+    const d=new Date(iso+"T12:00:00");
+    return d.toLocaleDateString("es-MX",{weekday:"long",day:"numeric",month:"long"});
+  }
+  function setEl(id,val){const e=document.getElementById(id);if(e)e.textContent=val;}
+  function setHref(id,url){const e=document.getElementById(id);if(e)e.href=url;}
+
+  const esTerrestre=(C.transporte==="terrestre");
+  const tieneVuelo=!esTerrestre&&(C.vuelo_info||C.vuelo_num);
+
+  // ── BLOQUE IDA (avión) ──
+  if(tieneVuelo){
+    document.getElementById("bloque-vuelo-ida").style.display="block";
+    document.getElementById("bloque-selector-al").style.display="block";
+    const numIda=C.vuelo_num||extraerNumVuelo(C.vuelo_info);
+    const rutaIda=C.vuelo_info?(C.vuelo_info.split("·").slice(1).join("·").trim()||C.vuelo_info):numIda;
+    setEl("c-vuelo-num", numIda);
+    setEl("c-vuelo-ruta", rutaIda);
+    setEl("c-vuelo-fecha", fechaLinda(C.fecha_viaje));
+    setEl("c-aerolinea-nom", nombresAl[C.aerolinea]||C.aerolinea||"Aerolínea");
+    // Links ida
+    const faIda="https://www.flightaware.com/live/flight/"+encodeURIComponent(numIda.replace(/\s/g,""));
+    setHref("btn-estatus", deepLinks[C.aerolinea]||faIda);
+    setHref("btn-flightaware", faIda);
+  }
+
+  // ── BLOQUE REGRESO ──
+  if(C.vuelo_regreso_info||C.vuelo_regreso_num){
+    document.getElementById("bloque-vuelo-regreso").style.display="block";
+    const numReg=C.vuelo_regreso_num||extraerNumVuelo(C.vuelo_regreso_info);
+    const rutaReg=C.vuelo_regreso_info?(C.vuelo_regreso_info.split("·").slice(1).join("·").trim()||C.vuelo_regreso_info):numReg;
+    const alReg=C.aerolinea_regreso||C.aerolinea;
+    setEl("c-vuelo-reg-num", numReg);
+    setEl("c-vuelo-reg-ruta", rutaReg);
+    setEl("c-vuelo-reg-fecha", fechaLinda(C.fecha_regreso||""));
+    setEl("c-aerolinea-reg-nom", nombresAl[alReg]||alReg||"Aerolínea");
+    const faReg="https://www.flightaware.com/live/flight/"+encodeURIComponent(numReg.replace(/\s/g,""));
+    setHref("btn-reg-estatus", deepLinks[alReg]||faReg);
+    setHref("btn-reg-flightaware", faReg);
+  }
+
+  // ── BLOQUE TERRESTRE ──
+  if(esTerrestre){
+    document.getElementById("bloque-terrestre").style.display="block";
+    const ori=C.ciudad_origen||"Origen";
+    const dest=C.ciudad_destino||"Destino";
+    const oriMX=ori+", México", destMX=dest+", México";
+    setEl("c-traslado-info", ori+" → "+dest);
+    setEl("c-traslado-det", C.traslado_detalle||"Consulta con tu agente los detalles del traslado.");
+    // Google Maps modo conducción
+    const gmaps="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(oriMX)+"&destination="+encodeURIComponent(destMX)+"&travelmode=driving";
+    setHref("btn-googlemaps", gmaps);
+    // Waze
+    const waze="https://waze.com/ul?navigate=yes&q="+encodeURIComponent(destMX);
+    setHref("btn-waze", waze);
+    // ADO (si menciona ADO en el detalle, sino link genérico)
+    if(C.traslado_detalle&&C.traslado_detalle.toLowerCase().includes("ado")){
+      setHref("btn-via-ado","https://www.ado.com.mx");
+    }
+  }
+
+  if(C.hotel_foto){
+    const ph=document.querySelector(".hero-photo");
+    const ico=ph.querySelector(".hero-icon");
+    if(ico)ico.style.display="none";
+    let img=ph.querySelector(".hero-ph-img");
+    if(!img){img=document.createElement("img");img.className="hero-ph-img";ph.insertBefore(img,ph.firstChild);}
+    img.src=convertirLinkDrive(C.hotel_foto);
+    img.alt=C.hotel_nombre||"Hotel";
+    img.onerror=()=>{img.style.display="none";};
+  }
+
+  const sel=document.getElementById("sel-aerolinea");
+  if(C.aerolinea&&sel){sel.value=C.aerolinea;actualizarAerolinea();}
+
+  if(C.fecha_viaje){
+    const fechaViaje=new Date(C.fecha_viaje);
+    const dias=Math.ceil((fechaViaje-new Date())/864e5);
+    document.getElementById("c-dias").textContent=dias>0?dias:dias===0?"¡HOY!":"🌴";
+  }
+
+  // Soportar ambos formatos: secciones.itinerario Y sec_itinerario
+  const secciones=C.secciones||{};
+  const secIti=secciones.itinerario||C.sec_itinerario||false;
+  const secLug=secciones.lugares||C.sec_lugares||false;
+  activarSeccion("iti",secIti);
+  activarSeccion("lug",secLug);
+
+  // Render checklist con datos del cliente
+  const tripData={
+    destino:{tipo:C.destino_tipo||"playa",internacional:C.internacional||false,nombre:C.ciudad_destino||"tu destino"},
+    duracion:C.duracion||5,
+    tipoCliente:C.tipo_cliente||"pareja",
+    soloUnPadre:C.solo_un_padre||false
+  };
+  renderChecklist(tripData);
+}
+
+/* ── CONVERT DRIVE ── */
+function convertirLinkDrive(url){
+  if(!url)return"";
+  const match=url.match(/\/d\/([a-zA-Z0-9_-]+)\//);
+  return match?`https://drive.google.com/uc?export=view&id=${match[1]}`:url;
+}
+
+/* ── ACTIVAR SECCIONES ── */
+function activarSeccion(id,activo){
+  if(!activo)return;
+  const card=document.getElementById("card-"+id);
+  const sb=document.getElementById("sb-"+id);
+  if(card){
+    card.classList.remove("off");
+    const tag=card.querySelector(".sc-off-tag");
+    if(tag)tag.remove();
+    const arr=document.createElement("div");
+    arr.className="sc-arr";arr.textContent="›";
+    card.appendChild(arr);
+    card.onclick=()=>go(id);
+  }
+  if(sb){sb.classList.remove("off");sb.onclick=()=>go(id);}
+}
+
+/* ── NAVEGACIÓN ── */
+window.go=function(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
+  const target=document.getElementById("s-"+id);
+  if(target)target.classList.add("on");
+  document.querySelectorAll(".sb-i").forEach(i=>i.classList.remove("on"));
+  const map={home:0,viaje:1,equip:2,hotel:3,iti:4,lug:5,reviews:6};
+  const items=document.querySelectorAll(".sb-i");
+  if(map[id]!==undefined)items[map[id]].classList.add("on");
+  const body=document.querySelector("#s-"+id+" .ib, #s-"+id+" .slist, #s-"+id+" .hotel-center");
+  if(body)body.scrollTop=0;
+  if(id==="viaje")initLeafletMap();
+};
+
+/* ── ESTRELLAS ── */
+window.setStars=function(n){
+  document.querySelectorAll("#stars .star").forEach((s,i)=>s.classList.toggle("e",i>=n));
+};
+
+/* ── FOTOS ── */
+window.subirFotos=function(){
+  if(!document.getElementById("priv-ok").checked){toast("Por favor acepta el aviso de privacidad.");return;}
+  const msg=encodeURIComponent("¡Hola Citimar! Quiero compartir mis fotos del viaje 📸✈️");
+  window.open("https://wa.me/525649169773?text="+msg,"_blank");
+};
+
+/* ══════════════════════════════════════
+   CHECKLIST INTELIGENTE
+══════════════════════════════════════ */
+function generarChecklist(cfg){
+  const {tipo,internacional,nombre}=cfg.destino;
+  const {duracion,tipoCliente,soloUnPadre}=cfg;
+  const esFamilia=(tipoCliente==="familia");
+  const esPlaya=(tipo==="playa");
+  const esCiudad=(tipo==="ciudad");
+  const outfits=Math.ceil(duracion/2)+1;
+
+  return [
+    {id:"mano",ico:"💼",label:"Equipaje de mano",color:"#e6f4fb",items:[
+      "Documentos originales (IDs / pasaporte)",
+      "Medicamentos esenciales",
+      "Cargador de celular + powerbank",
+      "Audífonos",
+      "Cambio de ropa (emergencia)",
+      ...(internacional?["Pasaporte vigente (6+ meses)","Seguro médico de viaje","Adaptador de corriente"]:["INE / identificación oficial"]),
+      ...(esFamilia?["Entretenimiento para niños","Bocadillos y snacks del vuelo"]:[]),
+      ...(tipoCliente==="pareja"?["Artículo pequeño de higiene personal"]:[]),
+    ]},
+    {id:"maleta",ico:"🧳",label:"Maleta documentada",color:"#fff4ec",items:[
+      `${outfits} outfits completos`,
+      "Ropa interior extra (3+)",
+      "Pijama",
+      "Zapatos cómodos para caminar",
+      ...(esPlaya?[
+        "Traje de baño (2 piezas)",
+        "Sandalias de playa",
+        "Pareo / toalla de playa",
+        "Protector solar FPS 50+",
+        "Gafas de sol"
+      ]:esCiudad?[
+        "Ropa casual-chic",
+        "Zapatos de moda o cómodos"
+      ]:[
+        "Botas para caminar",
+        "Ropa impermeable / pants"
+      ]),
+      ...(esFamilia?["Ropa extra para niños (accidentes)","Zapatos cómodos para niños"]:[]),
+      ...(tipoCliente==="pareja"?["Outfit romántico para cena especial"]:[]),
+    ]},
+    {id:"higiene",ico:"🪥",label:"Higiene personal",color:"#f3e5f5",items:[
+      "Cepillo y pasta dental",
+      "Desodorante",
+      "Shampoo y acondicionador",
+      "Afeitadora / depiladora",
+      ...(esPlaya?["Bronceador FPS 30","Labial con protección solar","Repelente de mosquitos"]:["Humectante facial"]),
+      ...(esFamilia?["Artículos de higiene para niños","Paracetamol y antigripal infantil"]:[]),
+    ]},
+    {id:"actividades",ico:"🎯",label:"Para las actividades",color:"#e8f5e9",items:[
+      ...(esPlaya?[
+        "Bolsa impermeable para teléfono",
+        "Gorra / sombrero",
+        "Snorkel (o rentar ahí)",
+        "Repelente de mosquitos"
+      ]:esCiudad?[
+        "Mapa descargado offline",
+        "Lista de restaurantes/museos",
+        "Tickets de actividades"
+      ]:[
+        "Repelente fuerte",
+        "Bastones de senderismo",
+        "Kit de primeros auxilios"
+      ]),
+      ...(esFamilia?["Juguetes de playa / arena","Flotadores para niños","Bloqueador solar para niños"]:["Cámara GoPro o accesorios"]),
+    ]},
+    {id:"docs",ico:"📋",label:"Documentos",color:esFamilia?"#fdecea":"#e6f4fb",items:[
+      "Reservación del hotel (PDF e impresa)",
+      "Vouchers de traslados",
+      "Confirmación de vuelo",
+      ...(internacional?[
+        "Pasaporte (vigente 6+ meses)",
+        "Visa (si aplica al destino)",
+        "Seguro médico internacional"
+      ]:["INE o pasaporte"]),
+      ...(esFamilia?[
+        "Acta de nacimiento de menores",
+        "Identificación de menores (si aplica)",
+        ...(internacional?[
+          "Pasaporte del menor (vigente)",
+          "Visa del menor (si aplica)",
+          ...(soloUnPadre?[
+            "⚠️ Carta notariada autorización del otro padre",
+            "Copia de ID del padre/madre ausente"
+          ]:[])
+        ]:[]),
+      ]:[]),
+      ...(tipoCliente==="pareja"?["Tarjeta de crédito sin comisiones int."]:[]),
+    ]},
+    {id:"extras",ico:"✨",label:"Extras recomendados",color:"#fff8e1",items:[
+      "Efectivo en pesos y dólares",
+      "Tarjeta bancaria sin comisiones",
+      "Bolsas Ziploc de distintos tamaños",
+      "Power bank cargado",
+      ...(esFamilia?["Dulces y snacks favoritos de los niños","Juego portátil / tablet cargada"]:["Libro / e-reader","Vino o detalle especial para la habitación"]),
+      ...(duracion>4?[`Ropa extra (${duracion} días = más outfits)`]:[]),
+    ]},
+  ];
+}
+
+function generarTips(cfg){
+  const {tipo,internacional}=cfg.destino;
+  const {tipoCliente,soloUnPadre}=cfg;
+  const tips=[];
+  const warns=[];
+
+  if(tipoCliente==="familia"){
+    tips.push({ico:"👨‍👩‍👧‍👦",titulo:"Documentos para menores",texto:"Lleva actas de nacimiento originales y copia, más una foto escolar de los niños. En viajes nacionales es suficiente; en internacionales necesitarás el pasaporte del menor."});
+    if(internacional){
+      tips.push({ico:"🛂",titulo:"Pasaporte del menor",texto:"El pasaporte del menor debe tener al menos 6 meses de vigencia. Tramítalo con mínimo 4 semanas de anticipación."});
+      if(soloUnPadre){
+        warns.push({ico:"⚠️",titulo:"Viajas sin el otro padre/tutor",texto:"¡IMPORTANTE! Si el menor viaja solo con uno de los padres o con otra persona, DEBES llevar una carta notariada firmada por el padre/madre que NO viaja, con copia de su identificación. Sin este documento pueden negar el abordaje o la entrada al país."});
+      }
+    }
+    tips.push({ico:"💊",titulo:"Botiquín para niños",texto:"Incluye termómetro, paracetamol pediátrico, antihistamínico, suero oral y banditas. Verifica qué llevar con el pediatra."});
+  }
+
+  if(tipo==="playa"&&tipoCliente==="pareja"){
+    tips.push({ico:"🌅",titulo:"Tip romántico",texto:"Reserva una cena especial en la playa o una excursión privada. Tu agente puede ayudarte a organizar sorpresas para tu pareja."});
+  }
+
+  if(internacional){
+    tips.push({ico:"💳",titulo:"Tarjeta sin comisiones",texto:"Usa una tarjeta de débito/crédito sin comisiones internacionales (Nu, Hey Banco, HSBC Zero). Ahorra hasta 4% por cada pago."});
+  }
+
+  return {tips,warns};
+}
+
+/* ── RENDER CHECKLIST ── */
+function renderChecklist(cfg){
+  window._lastCfg=cfg;
+  const secs=generarChecklist(cfg);
+  const {tips,warns}=generarTips(cfg);
+  const totalItems=secs.reduce((a,s)=>a+s.items.length,0);
+  const doneItems=Object.values(checkState).filter(Boolean).length;
+  const pct=totalItems?Math.round(doneItems/totalItems*100):0;
+
+  let html=`
+<div class="cl-header">
+  <div class="cl-badge">✨ Citimar Smart Checklist</div>
+  <div class="cl-title">Checklist de Equipaje</div>
+  <div class="cl-sub">${cfg.destino.nombre} · ${cfg.duracion} días · ${cfg.tipoCliente==="familia"?"Familia":"Pareja"}</div>
+  <div class="cl-stats">
+    <div class="cl-stat"><div class="cl-stat-n">${totalItems}</div><div class="cl-stat-l">artículos</div></div>
+    <div class="cl-stat"><div class="cl-stat-n">${doneItems}</div><div class="cl-stat-l">listos</div></div>
+    <div class="cl-stat"><div class="cl-stat-n">${pct}%</div><div class="cl-stat-l">completado</div></div>
+  </div>
+  <div class="cl-actions">
+    <button class="cla cla-w" onclick="marcarTodo()">✅ Todo listo</button>
+    <button class="cla cla-g" onclick="toast('Checklist compartido por WhatsApp 📲')">🔗 Compartir</button>
+    <button class="cla cla-o" onclick="abrirLink('checklist')">📋 Lista PDF</button>
+  </div>
+</div>`;
+
+  // ADVERTENCIAS primero
+  warns.forEach(w=>{
+    html+=`<div class="warn-card"><div class="warn-t">${w.ico} ${w.titulo}</div><div class="warn-i">${w.texto}</div></div>`;
+  });
+
+  // TIPS
+  tips.forEach(t=>{
+    html+=`<div class="tip-card"><div class="tip-t">${t.ico} ${t.titulo}</div><div class="tip-i">${t.texto}</div></div>`;
+  });
+
+  // SECCIONES
+  secs.forEach(sec=>{
+    const done=sec.items.filter((_,i)=>checkState[sec.id+"_"+i]).length;
+    const pctSec=Math.round(done/sec.items.length*100);
+    html+=`<div class="cl-sec">
+      <div class="cl-sec-h" onclick="toggleSec('${sec.id}')">
+        <div class="cl-sec-l">
+          <div class="cl-sec-ico" style="background:${sec.color}">${sec.ico}</div>
+          <div><div class="cl-sec-name">${sec.label}</div><div class="cl-sec-cnt">${done}/${sec.items.length} listos</div></div>
+        </div>
+        <div class="cl-sec-pct">${pctSec}%</div>
+      </div>
+      <div class="cl-prog"><div class="cl-prog-b" style="width:${pctSec}%"></div></div>
+      <div class="cl-items" id="sec-${sec.id}">`;
+    sec.items.forEach((item,i)=>{
+      const key=sec.id+"_"+i;
+      const done=checkState[key];
+      html+=`<div class="cl-item">
+        <div class="cl-cb ${done?"done":""}" onclick="toggleItem('${key}','${encodeURIComponent(JSON.stringify(cfg))}')"></div>
+        <div class="cl-txt ${done?"done":""}">${item}</div>
+      </div>`;
+    });
+    html+=`</div></div>`;
+  });
+
+  // GUÍA + PackPoint + Restricciones
+  html+=`<div class="slbl" style="margin-top:12px">Guía Citimar</div>
+<div class="eq"><div class="eq-top"><div class="eq-i" style="background:var(--orange-light)">📋</div><div><div class="eq-n">Lista de equipaje en PDF</div><div class="eq-d">Descarga el checklist completo de tu viaje preparado por tu agente</div></div></div><div class="eq-btns"><button class="eb eb-bl" onclick="abrirLink('checklist')">📄 Ver PDF</button></div></div>
+<div class="eq"><div class="eq-top"><div class="eq-i" style="background:var(--blue-light)">📦</div><div><div class="eq-n">PackPoint</div><div class="eq-d">Lista inteligente por clima y actividades · Gratis · iOS y Android</div></div></div><div class="eq-btns"><a href="https://apps.apple.com/us/app/packpoint-travel-packing-list/id896337401" target="_blank" class="eb eb-bl">📱 App Store</a><a href="https://play.google.com/store/apps/details?id=com.YRH.PackPoint" target="_blank" class="eb eb-or">🤖 Google Play</a></div></div>
+<div class="eq"><div class="eq-top"><div class="eq-i" style="background:var(--red-light)">✈️</div><div><div class="eq-n">Equipaje Volaris</div><div class="eq-d">Medidas, pesos y artículos restringidos</div></div></div><div class="eq-btns"><a href="https://drive.google.com/file/d/16hHxfyRgrGAY6Zt6dHX21G7ElCO3XUD-/view?usp=sharing" target="_blank" class="eb eb-rd">📄 Ver PDF</a></div></div>`;
+
+  document.getElementById("equip-body").innerHTML=html;
+}
+
+window.toggleItem=function(key,cfgEncoded){
+  checkState[key]=!checkState[key];
+  const cfg=JSON.parse(decodeURIComponent(cfgEncoded));
+  renderChecklist(cfg);
+};
+
+window.marcarTodo=function(){
+  const cfg=window._lastCfg;
+  if(!cfg)return;
+  const secs=generarChecklist(cfg);
+  secs.forEach(s=>s.items.forEach((_,i)=>{checkState[s.id+"_"+i]=true;}));
+  renderChecklist(cfg);
+  toast("¡Todo marcado como listo! ✅");
+};
+
+window.toggleSec=function(id){
+  const el=document.getElementById("sec-"+id);
+  if(el)el.style.display=el.style.display==="none"?"flex":"none";
+};
+
+/* ── LOADING / ERROR ── */
+function ocultarLoading(){
+  setTimeout(()=>{
+    const ls=document.getElementById("ls");
+    ls.style.opacity="0";ls.style.pointerEvents="none";
+    setTimeout(()=>ls.style.display="none",500);
+  },800);
+}
+function mostrarError(msg){
+  document.getElementById("ls").innerHTML=`<div style="text-align:center;padding:30px;color:#fff"><div style="font-size:50px;margin-bottom:20px">⚠️</div><div style="font-size:18px;font-weight:700;margin-bottom:12px">Oops</div><div style="font-size:13px;opacity:.8;line-height:1.6">${msg}</div><div style="margin-top:24px;font-size:11px;opacity:.5">viajes.citimartravel.com</div></div>`;
+}
+
+/* ── CARGAR AL INICIO ── */
+window.addEventListener("load",async()=>{
+  const id=getClienteId();
+  if(!id){mostrarError("No se indicó un cliente.<br>Usa el link que te envió tu agente.");return;}
+  try{
+    const snap=await getDoc(doc(db,"clientes",id));
+    if(!snap.exists()){mostrarError(`No se encontró el cliente "<b>${id}</b>".<br>Verifica el link con tu agente.`);return;}
+    init(snap.data());
+    ocultarLoading();
+  }catch(err){
+    console.error(err);
+    mostrarError("Error al conectar con la base de datos.<br>Intenta de nuevo más tarde.");
+  }
+});
+</script>
+</body>
+</html>
